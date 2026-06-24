@@ -1,0 +1,47 @@
+name: Docker Build and Test
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Build Docker image
+        run: |
+          docker build \
+            -t devops-web-app:latest \
+            ./05-devops-integration
+
+      - name: Run the container
+        run: |
+          docker run -d \
+            --name devops-web-app \
+            -p 8080:80 \
+            devops-web-app:latest
+
+      - name: Wait for container to start
+        run: sleep 5
+
+      - name: Verify container is running
+        run: |
+          docker ps | grep devops-web-app
+
+      - name: Test HTTP response
+        run: |
+          curl -f http://localhost:8080 || exit 1
+
+      - name: Clean up
+        run: |
+          docker stop devops-web-app
+          docker rm devops-web-app
+          docker rmi devops-web-app:latest
